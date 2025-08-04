@@ -37,11 +37,11 @@ import {
   exchangeCodeForToken,
   isReconnectionAttempt,
   validateLinkedInConnection,
+  signOutFromLinkedIn,
   isAuthInProgress,
   wasSignedOutFromLinkedIn,
   clearLinkedInSignOutTracking,
   type LinkedInUser,
-  clearLinkedInConnection,
 } from "@/lib/linkedin-frontend-config"
 
 export function LinkedInConnectionSettings() {
@@ -251,55 +251,21 @@ export function LinkedInConnectionSettings() {
       console.log("Disconnecting and signing out from LinkedIn...")
 
       // Show immediate feedback
-      setSuccess("Clearing your LinkedIn connection and signing out... Please wait.")
+      setSuccess("Signing out from LinkedIn... Please wait.")
 
-      // Clear all local data immediately
-      clearLinkedInConnection()
+      // Sign out from LinkedIn (this will redirect to LinkedIn logout and back)
+      await signOutFromLinkedIn()
+
+      // The page will redirect, so these won't execute immediately
       setConnection(null)
       setShowDisconnectDialog(false)
       setIsReconnectionFlow(true)
       setAuthInProgress(false)
 
-      // Mark disconnection
-      const logoutInfo = {
-        loggedOutAt: new Date().toISOString(),
-        reason: "manual_disconnect",
-        requiresFreshLogin: true,
-        signedOutFromLinkedIn: true,
-      }
-      localStorage.setItem("linkedin_logout_info", JSON.stringify(logoutInfo))
-
-      // Show success message
-      setSuccess("LinkedIn account disconnected successfully. Opening LinkedIn logout page...")
-
-      // Open LinkedIn logout in a new tab for user convenience
-      setTimeout(() => {
-        const linkedinLogoutUrl = "https://www.linkedin.com/m/logout"
-        const logoutWindow = window.open(
-          linkedinLogoutUrl,
-          "_blank",
-          "width=600,height=400,scrollbars=yes,resizable=yes",
-        )
-
-        // Close the logout tab after a few seconds
-        setTimeout(() => {
-          if (logoutWindow && !logoutWindow.closed) {
-            logoutWindow.close()
-          }
-        }, 3000)
-
-        // Update success message
-        setSuccess(
-          "LinkedIn account disconnected successfully. You've been signed out from LinkedIn. Next connection will require fresh login.",
-        )
-        setWasSignedOut(true)
-      }, 500)
-
-      console.log("LinkedIn disconnect completed successfully")
+      console.log("LinkedIn sign out initiated - user will be redirected")
     } catch (error) {
       console.error("Disconnect error:", error)
-      setError("Failed to disconnect LinkedIn account")
-    } finally {
+      setError("Failed to sign out from LinkedIn account")
       setIsDisconnecting(false)
     }
   }
@@ -776,17 +742,17 @@ export function LinkedInConnectionSettings() {
               Sign Out & Disconnect LinkedIn Account
             </DialogTitle>
             <DialogDescription>
-              Are you sure you want to disconnect your LinkedIn account? This will clear your connection and open
-              LinkedIn's logout page in a new tab to help you sign out.
+              Are you sure you want to sign out from LinkedIn and disconnect your account? This will ensure complete
+              security by signing you out from LinkedIn's session.
             </DialogDescription>
           </DialogHeader>
 
           <div className="py-4 space-y-4">
             <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-              <h4 className="font-semibold text-amber-800 mb-2">Secure Disconnect Process</h4>
+              <h4 className="font-semibold text-amber-800 mb-2">Complete Sign-Out Process</h4>
               <p className="text-sm text-amber-700">
-                This will clear your LinkedIn connection from our app and open LinkedIn's logout page in a new tab to
-                help you sign out from LinkedIn. Your next connection will require fresh authentication.
+                This will sign you out from LinkedIn's session and redirect you back to this page. Your next connection
+                attempt will require you to sign in to LinkedIn again, ensuring maximum security.
               </p>
             </div>
 
@@ -794,16 +760,16 @@ export function LinkedInConnectionSettings() {
               <h4 className="font-semibold text-sm">This will:</h4>
               <ul className="space-y-1 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
+                  <LogOut className="h-3 w-3 text-blue-500" />
+                  Sign you out from LinkedIn's session completely
+                </li>
+                <li className="flex items-center gap-2">
                   <XCircle className="h-3 w-3 text-red-500" />
                   Remove your stored LinkedIn credentials and access tokens
                 </li>
                 <li className="flex items-center gap-2">
                   <XCircle className="h-3 w-3 text-red-500" />
                   Disable direct posting to LinkedIn via the UGC API
-                </li>
-                <li className="flex items-center gap-2">
-                  <ExternalLink className="h-3 w-3 text-blue-500" />
-                  Open LinkedIn logout page in a new tab (for your convenience)
                 </li>
                 <li className="flex items-center gap-2">
                   <Lock className="h-3 w-3 text-blue-500" />

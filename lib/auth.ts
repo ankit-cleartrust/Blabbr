@@ -1,42 +1,14 @@
 import type { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
-import CredentialsProvider from "next-auth/providers/credentials"
 import { linkedInProvider } from "./linkedin-auth"
 import type { UserInfo } from "./types"
 import { getSession } from "next-auth/react"
-import { loginWithCredentials, validateLoginResponse } from "./auth-api"
 
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-    }),
-    CredentialsProvider({
-      name: "credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null
-        }
-
-        const loginData = await loginWithCredentials(credentials.email, credentials.password)
-
-        if (!loginData || !validateLoginResponse(loginData)) {
-          return null
-        }
-
-        return {
-          id: loginData.user?.id || loginData.id || credentials.email,
-          email: credentials.email,
-          name: loginData.user?.name || loginData.name || credentials.email.split("@")[0],
-          image: loginData.user?.image || loginData.image || null,
-          accessToken: loginData.token || loginData.accessToken || null,
-        }
-      },
     }),
     linkedInProvider,
   ],
@@ -61,11 +33,6 @@ export const authOptions: NextAuthOptions = {
           ;(session.user as any).linkedinAccessToken = token.linkedinAccessToken
         }
 
-        // Include backend access token if available
-        if (token.accessToken) {
-          ;(session as any).accessToken = token.accessToken
-        }
-
         // Ensure we're passing the image URL correctly
         if (token.picture) {
           session.user.image = token.picture as string
@@ -83,14 +50,9 @@ export const authOptions: NextAuthOptions = {
           token.linkedinAccessToken = account.access_token
         }
 
-        // Store backend access token for credentials login
-        if (account.provider === "credentials" && (user as any).accessToken) {
-          token.accessToken = (user as any).accessToken
-        }
-
         return {
           ...token,
-          accessToken: account.access_token || (user as any).accessToken,
+          accessToken: account.access_token,
           picture: user.image,
         }
       }

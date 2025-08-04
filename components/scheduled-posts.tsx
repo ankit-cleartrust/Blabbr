@@ -145,8 +145,6 @@ export default function ScheduledPosts({ posts, onEdit, onDelete }: ScheduledPos
         return "bg-green-100 text-green-800"
       case "failed":
         return "bg-red-100 text-red-800"
-      case "partial":
-        return "bg-yellow-100 text-yellow-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
@@ -378,12 +376,6 @@ export default function ScheduledPosts({ posts, onEdit, onDelete }: ScheduledPos
                             <Badge variant="outline" className="bg-blue-100 text-blue-800 flex items-center gap-1">
                               <ImageIcon className="h-3 w-3" />
                               {post.images.length} {post.images.length === 1 ? "image" : "images"}
-                            </Badge>
-                          )}
-                          {post.platforms?.includes("linkedin") && (
-                            <Badge variant="outline" className="bg-blue-100 text-blue-800 flex items-center gap-1">
-                              <Linkedin className="h-3 w-3" />
-                              Direct LinkedIn
                             </Badge>
                           )}
                         </div>

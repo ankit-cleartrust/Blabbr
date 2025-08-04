@@ -296,37 +296,28 @@ export function signOutFromLinkedIn(): Promise<void> {
 
       localStorage.setItem("linkedin_logout_info", JSON.stringify(logoutInfo))
 
-      // Instead of using LinkedIn's logout endpoint (which may not be available),
-      // we'll open LinkedIn's main logout page in a new tab and then redirect back
-      const linkedinLogoutUrl = "https://www.linkedin.com/m/logout"
-
-      console.log("Opening LinkedIn logout in new tab and redirecting back...")
-
-      // Open LinkedIn logout in a new tab
-      const logoutWindow = window.open(linkedinLogoutUrl, "_blank", "width=600,height=400")
-
-      // Close the logout tab after a short delay
-      setTimeout(() => {
-        if (logoutWindow && !logoutWindow.closed) {
-          logoutWindow.close()
-        }
-      }, 2000)
-
-      // Redirect back to settings page with signed out status
-      setTimeout(() => {
-        const currentOrigin = window.location.origin
-        const returnUrl = `${currentOrigin}/settings?linkedin=signed_out`
-        window.location.href = returnUrl
-        resolve()
-      }, 1000)
-    } catch (error) {
-      console.error("Error during LinkedIn sign out:", error)
-      // Fallback: just clear local data and redirect
-      clearLinkedInConnection()
-
+      // Get the current origin for redirect back
       const currentOrigin = window.location.origin
       const returnUrl = `${currentOrigin}/settings?linkedin=signed_out`
-      window.location.href = returnUrl
+
+      // LinkedIn logout URL - this will sign out the user from LinkedIn
+      const linkedinLogoutUrl = `https://www.linkedin.com/oauth/v2/logout?client_id=${process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID}&redirect_uri=${encodeURIComponent(returnUrl)}`
+
+      console.log("Redirecting to LinkedIn logout:", {
+        logoutUrl: linkedinLogoutUrl,
+        returnUrl,
+      })
+
+      // Redirect to LinkedIn logout page
+      // This will sign out the user from LinkedIn and redirect back to our app
+      window.location.href = linkedinLogoutUrl
+
+      // Resolve after a short delay to allow the redirect to start
+      setTimeout(resolve, 100)
+    } catch (error) {
+      console.error("Error during LinkedIn sign out:", error)
+      // Fallback: just clear local data if LinkedIn logout fails
+      clearLinkedInConnection()
       resolve()
     }
   })
